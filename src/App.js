@@ -1,44 +1,39 @@
 import React, { Component } from 'react';
 import './App.css';
 import DATA from './data.js';
+import Table from './components/Table';
 
 class App extends Component {
-  constructor(props) {
-    super(props);
-    this.renderTableData = this.renderTableData.bind(this);
-  }
 
-  renderTableData() {
-    return DATA.routes.map((flight, idx) => {
-      const { airline, src, dest } = flight
-      return (
-        <tr key={idx}>
-          <td>{DATA.getAirlineById(airline)}</td>
-          <td>{DATA.getAirportByCode(src)}</td>
-          <td>{DATA.getAirportByCode(dest)}</td>
-        </tr>
-      );
-    });
+  formatValue(property, value) {
+    if (property === 'airline') {
+      return DATA.getAirlineById(value);
+    } else {
+      return DATA.getAirportByCode(value);
+    }
   }
 
   render() {
+    const columns = [
+      {name: 'Airline', property: 'airline'},
+      {name: 'Source Airport', property: 'src'},
+      {name: 'Destination Airport', property: 'dest'},
+    ];
+
+    const filteredRoutes = DATA.routes;
+
     return (
       <div className="app">
         <header className="header">
           <h1 className="title">Airline Routes</h1>
         </header>
-        <table>
-          <thead>
-            <tr>
-              <th>Airline</th>
-              <th>Source</th>
-              <th>Destination</th>
-            </tr>
-          </thead>
-          <tbody>
-            {this.renderTableData()}
-          </tbody>
-        </table>
+        <section>
+          <Table className="routes-table"
+            columns={columns}
+            rows={filteredRoutes}
+            format={this.formatValue}
+          />
+        </section>
       </div>
     );
   }
