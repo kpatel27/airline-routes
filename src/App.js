@@ -13,9 +13,9 @@ class App extends Component {
       const { airline, src, dest } = flight
       return (
         <tr key={idx}>
-          <td>{airline}</td>
-          <td>{src}</td>
-          <td>{dest}</td>
+          <td>{DATA.getAirlineById(airline)}</td>
+          <td>{DATA.getAirportByCode(src)}</td>
+          <td>{DATA.getAirportByCode(dest)}</td>
         </tr>
       );
     });
