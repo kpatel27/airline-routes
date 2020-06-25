@@ -1396,11 +1396,11 @@ const airports = [
 ];
 
 function getAirlineById(id) {
-  return airlines.filter(airline => id === airline.id)[0].name;
-}
+  return airlines.find(airline => airline.id === id );
+};
 
 function getAirportByCode(code) {
-  return airports.filter(airport => code === airport.code)[0].name;
-}
+  return airports.find(airport => airport.code === code );
+};
 
 export default {routes, airlines, airports, getAirlineById, getAirportByCode};
