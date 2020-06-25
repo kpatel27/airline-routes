@@ -1,48 +1,46 @@
 import React, { Component } from 'react';
 import './App.css';
-import DATA from './data.js';
 import Table from './components/Table';
-import Select from './components/Select'
+import Select from './components/Select';
+import Map from './components/Map';
+import DATA from './data';
 
 class App extends Component {
-  state = {
-    filterByAirline: 'all',
-    filterByAirport: 'all',
+  defaultState = {
+    airline: 'all',
+    airport: 'all',
   }
 
-  filterByAirlines = (route) => {
-    let selectedAirline = this.state.filterByAirline;
-    return selectedAirline === 'all' || route.airline === selectedAirline;
+  constructor(props) {
+    super(props);
+    this.state = this.defaultState;
   }
 
-  filterByAirport = (route) => {
-    let selectedAirport = this.state.filterByAirport;
-    return selectedAirport === 'all' || route.src === selectedAirport || route.dest === selectedAirport;
+  airlineSelected = (value) => {
+    if (value !== 'all') {
+      value = parseInt(value, 10);
+    }
+    this.setState({airline: value});
+  }
+  airportSelected = (value) => { this.setState({airport: value}) }
+
+  clearFilters = () => {
+    this.setState(this.defaultState);
   }
 
-  onSelectAirline = (e) => {
-    let airlineId = e.target.value;
-    if (airlineId !== 'all') {airlineId = Number(airlineId)};
-    this.setState({filterByAirline: airlineId});
-  }
+  routeHasCurrentAirline = (route) => {
+    return route.airline === this.state.airline || this.state.airline === 'all';
+  };
 
-  onSelectAirport = (e) => {
-    const airportCode = e.target.value;
-    this.setState({filterByAirport: airportCode});
-  }
-
-  clearFilter = () => {
-    this.setState({
-      filterByAirline: 'all',
-      filterByAirport: 'all',
-    });
-  }
+  routeHasCurrentAirport = (route) => {
+    return route.src === this.state.airport || route.dest === this.state.airport || this.state.airport === 'all';
+  };
 
   formatValue(property, value) {
     if (property === 'airline') {
-      return DATA.getAirlineById(value);
+      return DATA.getAirlineById(value).name;
     } else {
-      return DATA.getAirportByCode(value);
+      return DATA.getAirportByCode(value).name;
     }
   }
 
@@ -53,46 +51,50 @@ class App extends Component {
       {name: 'Destination Airport', property: 'dest'},
     ];
 
-    const filteredRoutes = DATA.routes.filter(route => this.filterByAirport(route) && this.filterByAirlines(route));
-    const filteredRoutesByAirline = DATA.routes.filter(this.filterByAirlines);
-    const filteredRoutesByAirport = DATA.routes.filter(this.filterByAirport);
-    const filteredAirlines = DATA.airlines.filter(airline => {
-      return filteredRoutesByAirport.some(route => route.airline === airline.id );
+    const filteredRoutes = DATA.routes.filter( (route) => {
+      return this.routeHasCurrentAirline(route) && this.routeHasCurrentAirport(route);
     });
-    const filteredAirports = DATA.airports.filter(airport => {
-      return filteredRoutesByAirline.some(route => route.src === airport.code || route.dest === airport.code );
+
+    const filteredRoutesByAirline = DATA.routes.filter(this.routeHasCurrentAirline);
+
+    const filteredRoutesByAirport = DATA.routes.filter(this.routeHasCurrentAirport);
+
+    const filteredAirlines = DATA.airlines.filter( (airline) => {
+      return filteredRoutesByAirport.some( (route) => route.airline === airline.id );
     });
+
+    const filteredAirports = DATA.airports.filter( (airport) => {
+      return filteredRoutesByAirline.some( (route) => route.src === airport.code || route.dest === airport.code );
+    });
+
+    const defaultsSelected = this.state.airline === this.defaultState.airline && this.state.airport === this.defaultState.airport;
 
     return (
       <div className="app">
         <header className="header">
           <h1 className="title">Airline Routes</h1>
         </header>
+
         <section>
-          Show routes on
-          <Select
-            options={filteredAirlines}
-            valueKey="id"
-            titleKey="name"
-            allTitle="All Airlines"
-            value={this.state.filterByAirline}
-            onSelect={this.onSelectAirline}
-          />
-          flying in or out of
-          <Select
-            options={filteredAirports}
-            valueKey="code"
-            titleKey="name"
-            allTitle="All Airports"
-            value={this.state.filterByAirport}
-            onSelect={this.onSelectAirport}
-          />
-          <button onClick={this.clearFilter}>Show All Routes</button>
-          <Table className="routes-table"
-            columns={columns}
-            rows={filteredRoutes}
-            format={this.formatValue}
-          />
+          <Map routes={filteredRoutes} />
+
+          <p>
+            Show routes on
+            <Select options={filteredAirlines} valueKey="id" titleKey="name" enabledKey="active"
+                allTitle="All Airlines"
+                value={this.state.airline}
+                onSelect={this.airlineSelected}
+            />
+            flying in or out of
+            <Select options={filteredAirports} valueKey="code" titleKey="name" enabledKey="active"
+                allTitle="All Airports"
+                value={this.state.airport}
+                onSelect={this.airportSelected}
+            />
+            <button onClick={this.clearFilters} disabled={defaultsSelected}>Show All Routes</button>
+          </p>
+
+          <Table className="routes-table" columns={columns} rows={filteredRoutes} format={this.formatValue} />
         </section>
       </div>
     );

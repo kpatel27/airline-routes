@@ -1,72 +1,78 @@
 import React, { Component } from 'react';
 
-export default class Table extends Component {
-  constructor(props) {
-    super(props);
+class Table extends Component {
+  static defaultProps = {
+    columns: [{name: 'header', property: 'value'}],
+    rows: [{id: 1, value: 'cell'}],
+    format: (property, value) => value,
+    perPage: 25,
+    className: "table"
+  }
+
+  constructor(...args) {
+    super(...args);
     this.state = {
-      page: 0,
-      perPage: 25,
+      page: 0
     };
   }
 
-  handleClickNext = e => {
-    this.setState({
-      page: this.state.page + 1
-    });
+  nextPage = (event) => {
+    event.preventDefault();
+    this.setState({page: this.state.page + 1});
   }
 
-  handleClickPrevious = e => {
-    this.setState({
-      page: this.state.page - 1
-    });
+  previousPage = (event) => {
+    event.preventDefault();
+    this.setState({page: this.state.page - 1});
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({page: 0});
   }
 
   render() {
-    const headers = this.props.columns.map(col => <th key={col.name}>{col.name}</th>);
-    const tableRows = this.props.rows.map(row => {
-      const tableRow = this.props.columns.map(col => {
-        const data = this.props.format(col.property, row[col.property]);
-        return (<td key={col.property + data}>{data}</td>);
-      });
-      return (
-        <tr key={`${row.airline}:${row.src}:${row.dest}`}>
-          {tableRow}
-        </tr>
-      );
+    const headerCells = this.props.columns.map( (col) => {
+      return <th key={col.name}>{ col.name }</th>;
     });
 
-    const start = this.state.page * this.state.perPage;
-    const end = (this.state.page + 1) * this.state.perPage;
-    const rowsToDisplay = tableRows.slice(start, end);
+    const start = this.state.page * this.props.perPage;
+
+    const bodyRows = this.props.rows.slice(start, start + this.props.perPage).map( (row) => {
+      const rows = this.props.columns.map( (col) => {
+        const value = row[col.property];
+        return <td key={col.property + value}>{ this.props.format(col.property, value) }</td>
+      });
+      return <tr key={Object.values(row).join(':')}>
+        { rows }
+      </tr>
+    });
 
     return (
       <div>
         <table className={this.props.className}>
           <thead>
             <tr>
-              {headers}
+              { headerCells }
             </tr>
           </thead>
           <tbody>
-            {rowsToDisplay}
+            { bodyRows }
           </tbody>
         </table>
-        <div className='pagination'>
-          <p>Showing {start + 1}-{end} of {tableRows.length} routes</p>
-          <button
-            disabled={start === 0}
-            onClick={this.handleClickPrevious}
-          >
-            Previous Page
-          </button>
-          <button
-            disabled={end >= tableRows.length}
-            onClick={this.handleClickNext}
-          >
-            Next Page
-          </button>
+        <div className="pagination">
+          <p>Showing {start + 1 }-{start + bodyRows.length} of {this.props.rows.length} routes.</p>
+          <p>
+            <button key="previous" disabled={this.state.page === 0} onClick={this.previousPage}>
+              Previous Page
+            </button>
+            <button key="next" disabled={start + this.props.perPage >= this.props.rows.length} onClick={this.nextPage}>
+              Next Page
+            </button> 
+          </p>
         </div>
       </div>
-    )
+    );
   }
-}
+};
+
+export default Table;
